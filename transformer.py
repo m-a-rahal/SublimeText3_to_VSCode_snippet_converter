@@ -1,5 +1,5 @@
 import re
-from functions import all_sub_files, name_of
+from functions import all_sub_files, name_of, show_files
 
 
 #==================================================================================================
@@ -7,21 +7,26 @@ from functions import all_sub_files, name_of
 #==================================================================================================
 
 source_folder = 'C:/Users/Mohamed/AppData/Roaming/Sublime Text 3/Packages/User/Snippets/python snippets'
-output_file = 'results.py'
+output_file = 'python_snippets.json'
 ignored_files = []
+
+
+def main():
+    files = all_sub_files(source_folder)
+    with open(output_file, 'w') as res:
+        res.write('{\n')
+        for f in files:
+            snippet = Snippet()
+            snippet.extract_data_from_snippet(f)
+            # write snippets in a VSCode json file
+            
+            res.write(snippet.as_json())
+        res.write('}\n')
+
 
 #==================================================================================================
 #=== Functions & Classes ==================================================================================================
 #==================================================================================================
-
-def main():
-    files = all_sub_files(source_folder)
-    for f in files:
-        snippet = Snippet().extract_data_from_snippet(f)
-
-
-
-
 
 class Snippet():
     def __init__(self, name = '', body = '', descripion = '', trigger = '', scope = 'source.python'):
@@ -46,17 +51,32 @@ class Snippet():
         self.body = res.group(1)
         self.trigger = res.group(2)
         self.scope = res.group(3)
-        self.description = res.group(4) if res.group(4) is not None and len(res.group(4)) > 0 else None
+        self.description = res.group(4) if res.group(4) is not None and len(res.group(4)) > 0 else None 
 
+        # remove extras from the body (<![CDATA[...............]]>)
+        self.body = self.body[9:-3]
+        # normalization:
+        # 1. replace all tabs with 4 spaces
+        self.body.replace('\t', '    ')
+        # trasnform into list of lines
+        self.body = self.body.strip().split('\n')
+        #print(len(self.body), *self.body,sep='\n')
 
+    def as_json(self):
+        lines = []
+        lines.append(f'"{self.name}" :'+' {')
+        lines.append(f'"prefix" : "{self.trigger}",')
+        lines.append(f'"body" : [')
+        for l in self.body:
+            lines.append('\t'+f'"{l}",')
+        lines.append(f'],')
+        if self.description is not None:
+            lines.append(f'"description" : "{self.description}"')
+        lines.append('},\n')
 
+        # at end, add to all lines a leading tab and a newline
 
-
-def show_files(files):
-    print(*[x[:110] for x in files], sep='\n')
-    print(*[name_of(x) for x in files], sep='\n')
-    
-        
+        return ''.join(['\t'+line+'\n' for line in lines])
 
 #==================================================================================================
 #==================================================================================================

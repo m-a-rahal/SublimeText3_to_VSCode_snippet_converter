@@ -9,3 +9,9 @@ def all_sub_files(path):
 
 def name_of(path):
     return path.split('\\')[-1].split('.')[0]
+
+
+def show_files(files):
+    print(*[x[:110] for x in files], sep='\n')
+    print(*[name_of(x) for x in files], sep='\n')
+   
